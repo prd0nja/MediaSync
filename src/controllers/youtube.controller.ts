@@ -7,8 +7,8 @@ export class YoutubeController {
 	constructor(private youtubeService: YoutubeService) {}
 
 	@Post("video")
-	load(@Query("id") id: string) {
-		return this.youtubeService.video(id);
+	load(@Query("id") id: string, @Query("ifEnded") ifEnded?: string) {
+		return this.youtubeService.video(id, ifEnded);
 	}
 
 	@Post("shorts")

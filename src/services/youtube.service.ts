@@ -17,11 +17,18 @@ export class YoutubeService {
 		this.appGateway.broadcast(event, this.stateService.getCurrentState());
 	}
 
-	video(id: string) {
+	async video(id: string, ifEnded?: string) {
+		if (ifEnded) {
+			const currentState = this.stateService.getCurrentState();
+			if (currentState.duration === 0 || currentState.time < currentState.duration) {
+				return { success: false, error: "Video has not ended" };
+			}
+		}
 		this.stateService.state.type = "youtube";
 		this.stateService.state.mode = "video";
 		this.stateService.state.id = id;
 		this.stateService.state.looped = false;
+		this.stateService.state.duration = await this.getVideoDuration(id);
 		this.stateService.resetTime();
 		this.broadcast("video");
 		return { success: true };
@@ -41,6 +48,7 @@ export class YoutubeService {
 				this.stateService.state.mode = "browser-shorts";
 				this.stateService.state.id = videoId;
 				this.stateService.state.looped = true;
+				this.stateService.state.duration = 0;
 				this.stateService.resetTime();
 				this.broadcast("video");
 				return { success: true, id: videoId };
@@ -70,6 +78,7 @@ export class YoutubeService {
 			this.stateService.state.id = ids[0];
 			this.stateService.state.index = 0;
 			this.stateService.state.looped = true;
+			this.stateService.state.duration = 0;
 			this.stateService.resetTime();
 			this.broadcast("video");
 			return { success: true, ids };
@@ -99,6 +108,7 @@ export class YoutubeService {
 					this.stateService.state.id = ids[0];
 					this.stateService.state.index = 0;
 					this.stateService.state.looped = true;
+					this.stateService.state.duration = 0;
 					this.stateService.resetTime();
 					this.broadcast("video");
 					return { success: true, ids, nextPageToken: data.nextPageToken };
@@ -214,8 +224,37 @@ export class YoutubeService {
 		}
 	}
 
+	private async getVideoDuration(videoId: string) {
+		try {
+			const response = await fetch(
+				`https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`
+			);
+			const data = await response.json();
+
+			if (data.error || !data.items?.length) {
+				return 0;
+			}
+
+			const duration = data.items[0].contentDetails.duration;
+			return this.parseDuration(duration);
+		} catch {
+			return 0;
+		}
+	}
+
 	private extractShortId(url: string) {
 		const match = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
 		return match ? match[1] : null;
+	}
+	
+	private parseDuration(duration: string) {
+		const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+		if (!match) return 0;
+
+		const h = parseInt(match[1] || "0");
+		const m = parseInt(match[2] || "0");
+		const s = parseInt(match[3] || "0");
+
+		return h * 3600 + m * 60 + s;
 	}
 }
