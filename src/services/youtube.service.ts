@@ -20,7 +20,7 @@ export class YoutubeService {
 	async video(id: string, ifEnded?: string) {
 		if (ifEnded) {
 			const currentState = this.stateService.getCurrentState();
-			if (currentState.duration === 0 || currentState.time < currentState.duration) {
+			if (!currentState.duration || currentState.time < currentState.duration) {
 				return { success: false, error: "Video has not ended" };
 			}
 		}
@@ -230,11 +230,9 @@ export class YoutubeService {
 				`https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`
 			);
 			const data = await response.json();
-
 			if (data.error || !data.items?.length) {
 				return 0;
 			}
-
 			const duration = data.items[0].contentDetails.duration;
 			return this.parseDuration(duration);
 		} catch {
@@ -246,15 +244,13 @@ export class YoutubeService {
 		const match = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
 		return match ? match[1] : null;
 	}
-	
+
 	private parseDuration(duration: string) {
 		const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
 		if (!match) return 0;
-
 		const h = parseInt(match[1] || "0");
 		const m = parseInt(match[2] || "0");
 		const s = parseInt(match[3] || "0");
-
 		return h * 3600 + m * 60 + s;
 	}
 }
