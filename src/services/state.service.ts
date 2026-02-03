@@ -7,6 +7,7 @@ export class StateService {
 		id: "",
 		index: 0,
 		time: 0,
+		duration: 0,
 		paused: false,
 		looped: false,
 		mode: ""
@@ -52,6 +53,7 @@ type State = {
 	id: string;
 	index: number;
 	time: number;
+	duration: number;
 	paused: boolean;
 	looped: boolean;
 };
