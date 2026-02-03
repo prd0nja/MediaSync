@@ -8,7 +8,7 @@ export class YoutubeController {
 
 	@Post("video")
 	load(@Query("id") id: string, @Query("ifEnded") ifEnded?: string) {
-		return this.youtubeService.video(id, !!ifEnded);
+		return this.youtubeService.video(id, ifEnded);
 	}
 
 	@Post("shorts")

@@ -17,7 +17,7 @@ export class YoutubeService {
 		this.appGateway.broadcast(event, this.stateService.getCurrentState());
 	}
 
-	async video(id: string, ifEnded: boolean = false) {
+	async video(id: string, ifEnded?: string) {
 		if (ifEnded) {
 			const currentState = this.stateService.getCurrentState();
 			if (currentState.duration === 0 || currentState.time < currentState.duration) {
