@@ -21,24 +21,4 @@ export class YoutubeController {
 	playlist(@Query("id") id: string, @Query("page") page?: string) {
 		return this.youtubeService.playlist(id, parseInt(page || "1"));
 	}
-
-	@Post("next")
-	next() {
-		return this.youtubeService.next();
-	}
-
-	@Post("prev")
-	prev() {
-		return this.youtubeService.prev();
-	}
-
-	@Post("pause")
-	pause() {
-		return this.youtubeService.pause();
-	}
-
-	@Post("seek")
-	seek(@Query("time") time: string) {
-		return this.youtubeService.seek(time);
-	}
 }
