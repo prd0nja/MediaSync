@@ -1,5 +1,5 @@
-const CHUNK_SIZE = 512 * 1024; //512KB
-const MAX_CACHE_SIZE = 64 * 1024 * 1024; //64MB
+const CHUNK_SIZE = 512 * 1024; // 512 KB
+const MAX_CACHE_SIZE = 64 * 1024 * 1024; // 64 MB
 
 export class ChunkCache {
 	private chunks = new Map<number, CachedChunk>();
@@ -13,7 +13,6 @@ export class ChunkCache {
 			cached.lastAccess = ++this.accessCounter;
 			return cached.data;
 		}
-
 		const existing = this.pending.get(index);
 		if (existing) return existing;
 

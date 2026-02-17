@@ -3,7 +3,6 @@ import { createInterface } from "readline/promises";
 
 const { StringSession } = sessions;
 const rl = createInterface({ input: process.stdin, output: process.stdout });
-
 const apiId = parseInt(await rl.question("API ID: "));
 const apiHash = await rl.question("API Hash: ");
 
@@ -15,7 +14,7 @@ await client.start({
 	phoneNumber: () => rl.question("Phone number: "),
 	password: () => rl.question("2FA password (blank if none): "),
 	phoneCode: () => rl.question("Login code: "),
-	onError: (err) => console.error(err)
+	onError: err => console.error(err)
 });
 
 console.log("\nAdd to .env TELEGRAM_STRING_SESSION:");

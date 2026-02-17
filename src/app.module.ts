@@ -13,7 +13,14 @@ import { VideoService } from "./services/video.service";
 
 @Module({
 	controllers: [YoutubeController, TelegramController, VideoController],
-	providers: [AppGateway, StateService, BrowserService, YoutubeService, TelegramService, VideoService],
+	providers: [
+		AppGateway,
+		StateService,
+		BrowserService,
+		YoutubeService,
+		TelegramService,
+		VideoService
+	],
 	imports: [
 		ConfigModule.forRoot({
 			envFilePath:

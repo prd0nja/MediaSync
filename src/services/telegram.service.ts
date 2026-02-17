@@ -38,12 +38,10 @@ export class TelegramService implements OnModuleInit {
 			warn: console.warn,
 			error: console.error
 		};
-
 		this.client = new TelegramClient(new StringSession(stringSession), apiId, apiHash, {
 			connectionRetries: 5,
 			baseLogger: silentLogger as any
 		});
-
 		try {
 			await this.client.connect();
 			if (!(await this.client.isUserAuthorized())) {
@@ -72,15 +70,14 @@ export class TelegramService implements OnModuleInit {
 
 	async next() {
 		if (!this.videoIds.length) return;
-
 		this.currentIndex = (this.currentIndex + 1) % this.videoIds.length;
 		return this.video(this.videoIds[this.currentIndex]);
 	}
 
 	async prev() {
 		if (!this.videoIds.length) return;
-
-		this.currentIndex = this.currentIndex <= 0 ? this.videoIds.length - 1 : this.currentIndex - 1;
+		this.currentIndex =
+			this.currentIndex <= 0 ? this.videoIds.length - 1 : this.currentIndex - 1;
 		return this.video(this.videoIds[this.currentIndex]);
 	}
 
@@ -88,7 +85,6 @@ export class TelegramService implements OnModuleInit {
 		if (!this.channel) {
 			return { success: false, error: "No channel set" };
 		}
-
 		try {
 			const metadata = await this.getMetadata(messageId);
 			if (!metadata) {
@@ -97,7 +93,6 @@ export class TelegramService implements OnModuleInit {
 			if (this.activeVideo) {
 				this.activeVideo.cache.clear();
 			}
-
 			this.stateService.state.type = "telegram";
 			this.stateService.state.mode = "video";
 			this.stateService.state.id = `${this.channel}:${messageId}`;
@@ -106,9 +101,7 @@ export class TelegramService implements OnModuleInit {
 			this.stateService.state.paused = false;
 			this.stateService.resetTime();
 			this.broadcast("video");
-
 			this.activeVideo = { metadata, cache: new ChunkCache() };
-
 			return { success: true, channel: this.channel };
 		} catch (error) {
 			return { success: false, error: error.message };
@@ -117,13 +110,10 @@ export class TelegramService implements OnModuleInit {
 
 	async stream(range: string | undefined, res: Response) {
 		if (!range) return;
-
 		const video = this.activeVideo;
 		if (!video) return;
-
 		const { metadata, cache } = video;
 		const { fileSize, mimeType } = metadata;
-
 		const parts = range.replace(/bytes=/, "").split("-");
 		const start = parseInt(parts[0], 10);
 		const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
@@ -132,12 +122,9 @@ export class TelegramService implements OnModuleInit {
 			res.status(416).setHeader("Content-Range", `bytes */${fileSize}`).end();
 			return;
 		}
-
-		const contentLength = end - start + 1;
-
 		res.status(206);
 		res.setHeader("Content-Range", `bytes ${start}-${end}/${fileSize}`);
-		res.setHeader("Content-Length", contentLength);
+		res.setHeader("Content-Length", end - start + 1);
 		res.setHeader("Content-Type", mimeType);
 		res.setHeader("Accept-Ranges", "bytes");
 
@@ -145,24 +132,19 @@ export class TelegramService implements OnModuleInit {
 		res.on("close", () => {
 			state.aborted = true;
 		});
-
 		try {
 			let position = start;
-
 			while (position <= end && !state.aborted) {
 				const chunkIndex = Math.floor(position / CHUNK_SIZE);
 				const chunkOffset = chunkIndex * CHUNK_SIZE;
 				const chunkData = await cache.getChunk(chunkIndex, () =>
 					this.fetchChunk(metadata, chunkIndex)
 				);
-
 				if (state.aborted) break;
-
 				const offsetInChunk = position - chunkOffset;
 				const remaining = end - position + 1;
 				const available = chunkData.length - offsetInChunk;
 				const toWrite = Math.min(available, remaining);
-
 				if (toWrite <= 0) break;
 
 				const slice = chunkData.subarray(offsetInChunk, offsetInChunk + toWrite);
@@ -176,7 +158,6 @@ export class TelegramService implements OnModuleInit {
 				console.error("Stream failed", error.message);
 			}
 		}
-
 		res.end();
 	}
 
@@ -187,7 +168,7 @@ export class TelegramService implements OnModuleInit {
 				limit
 			});
 			this.videoIds = messages.filter(m => m?.media).map(m => m.id);
-		} catch (error) {
+		} catch {
 			this.videoIds = [];
 		}
 	}
@@ -207,7 +188,6 @@ export class TelegramService implements OnModuleInit {
 			collected += chunk.length;
 			if (collected >= CHUNK_SIZE) break;
 		}
-
 		const result = Buffer.concat(buffers);
 		return result.length > CHUNK_SIZE ? result.subarray(0, CHUNK_SIZE) : result;
 	}
@@ -225,7 +205,6 @@ export class TelegramService implements OnModuleInit {
 			message.media.document instanceof Api.Document
 		) {
 			const doc = message.media.document;
-
 			const metadata: VideoMetadata = {
 				inputLocation: new Api.InputDocumentFileLocation({
 					id: doc.id,
@@ -237,11 +216,9 @@ export class TelegramService implements OnModuleInit {
 				fileSize: Number(doc.size),
 				mimeType: doc.mimeType || "video/mp4"
 			};
-
 			this.metadataCache.set(cacheKey, metadata);
 			return metadata;
 		}
-
 		return null;
 	}
 }

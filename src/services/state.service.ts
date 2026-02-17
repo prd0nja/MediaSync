@@ -12,7 +12,7 @@ export class StateService {
 		looped: false,
 		mode: ""
 	};
-	ids: string[];
+	ids: string[] = [];
 	startedAt: Nullable<number> = null;
 	pausedTime: number = 0;
 

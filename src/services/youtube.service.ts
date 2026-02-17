@@ -126,7 +126,6 @@ export class YoutubeService {
 
 	async next() {
 		const mode = this.stateService.state.mode;
-
 		if (mode === "browser-shorts") {
 			return this.navigateBrowserShort("next");
 		}
@@ -145,11 +144,9 @@ export class YoutubeService {
 
 	async prev() {
 		const mode = this.stateService.state.mode;
-
 		if (mode === "browser-shorts") {
 			return this.navigateBrowserShort("prev");
 		}
-
 		if (mode === "shorts" || mode === "playlist") {
 			if (this.stateService.state.index - 1 >= 0) {
 				this.stateService.state.index--;
