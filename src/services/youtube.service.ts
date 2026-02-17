@@ -20,7 +20,7 @@ export class YoutubeService {
 	async video(id: string, ifEnded?: string) {
 		if (ifEnded) {
 			const currentState = this.stateService.getCurrentState();
-			if (currentState.duration === 0 || currentState.time < currentState.duration) {
+			if (!currentState.duration || currentState.time < currentState.duration) {
 				return { success: false, error: "Video has not ended" };
 			}
 		}
@@ -164,40 +164,6 @@ export class YoutubeService {
 		return { success: false, error: "No active playlist or shorts" };
 	}
 
-	pause() {
-		this.stateService.state.paused = !this.stateService.state.paused;
-		if (this.stateService.state.paused) {
-			this.stateService.pauseTime();
-		} else {
-			this.stateService.resumeTime();
-		}
-		this.broadcast("video-pause");
-		return { success: true };
-	}
-
-	seek(time: string) {
-		const timeStr = time || "0";
-		const isRelative = timeStr.startsWith("p") || timeStr.startsWith("n");
-		const cleanTime = isRelative ? timeStr.slice(1) : timeStr;
-		const parts = cleanTime.split(":").map(p => parseInt(p));
-		const timeDelta =
-			parts.length === 3
-				? parts[0] * 3600 + parts[1] * 60 + parts[2]
-				: parts.length === 2
-					? parts[0] * 60 + parts[1]
-					: parts[0];
-
-		let seekTime = timeDelta;
-		if (isRelative) {
-			const currentTime = this.stateService.getCurrentState().time;
-			seekTime = timeStr[0] === "p" ? currentTime + timeDelta : currentTime - timeDelta;
-		}
-		if (isNaN(seekTime) || seekTime < 0) seekTime = 0;
-		this.stateService.seekTime(seekTime);
-		this.broadcast("video-seek");
-		return { success: true };
-	}
-
 	private async navigateBrowserShort(direction: "next" | "prev") {
 		if (!this.browserService.hasActivePage()) {
 			return { success: false, error: "Browser not open" };
@@ -230,11 +196,9 @@ export class YoutubeService {
 				`https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`
 			);
 			const data = await response.json();
-
 			if (data.error || !data.items?.length) {
 				return 0;
 			}
-
 			const duration = data.items[0].contentDetails.duration;
 			return this.parseDuration(duration);
 		} catch {
@@ -246,15 +210,13 @@ export class YoutubeService {
 		const match = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
 		return match ? match[1] : null;
 	}
-	
+
 	private parseDuration(duration: string) {
 		const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
 		if (!match) return 0;
-
 		const h = parseInt(match[1] || "0");
 		const m = parseInt(match[2] || "0");
 		const s = parseInt(match[3] || "0");
-
 		return h * 3600 + m * 60 + s;
 	}
 }
