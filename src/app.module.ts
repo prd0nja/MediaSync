@@ -9,10 +9,11 @@ import { StateService } from "./services/state.service";
 import { BrowserService } from "./services/browser.service";
 import { YoutubeService } from "./services/youtube.service";
 import { TelegramService } from "./services/telegram.service";
+import { VideoService } from "./services/video.service";
 
 @Module({
 	controllers: [YoutubeController, TelegramController, VideoController],
-	providers: [AppGateway, StateService, BrowserService, YoutubeService, TelegramService],
+	providers: [AppGateway, StateService, BrowserService, YoutubeService, TelegramService, VideoService],
 	imports: [
 		ConfigModule.forRoot({
 			envFilePath:

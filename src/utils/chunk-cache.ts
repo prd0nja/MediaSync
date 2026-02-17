@@ -1,11 +1,6 @@
 const CHUNK_SIZE = 512 * 1024; //512KB
 const MAX_CACHE_SIZE = 64 * 1024 * 1024; //64MB
 
-interface CachedChunk {
-	data: Buffer;
-	lastAccess: number;
-}
-
 export class ChunkCache {
 	private chunks = new Map<number, CachedChunk>();
 	private pending = new Map<number, Promise<Buffer>>();
@@ -64,3 +59,8 @@ export class ChunkCache {
 }
 
 export { CHUNK_SIZE };
+
+interface CachedChunk {
+	data: Buffer;
+	lastAccess: number;
+}

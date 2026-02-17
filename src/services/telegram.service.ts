@@ -10,18 +10,6 @@ import { StateService } from "./state.service";
 
 const { StringSession } = sessions;
 
-interface VideoMetadata {
-	inputLocation: Api.InputDocumentFileLocation;
-	dcId: number;
-	fileSize: number;
-	mimeType: string;
-}
-
-interface ActiveVideo {
-	metadata: VideoMetadata;
-	cache: ChunkCache;
-}
-
 @Injectable()
 export class TelegramService implements OnModuleInit {
 	private client: TelegramClient;
@@ -70,16 +58,14 @@ export class TelegramService implements OnModuleInit {
 
 	async setChannel(name: string, limit: number) {
 		const channel = name.replace(/^@/, "");
-		if (this.channel !== channel) {
-			this.channel = channel;
-			this.metadataCache.clear();
-			this.activeVideo = null;
-			this.videoIds = [];
-			this.currentIndex = -1;
-			await this.fetchVideoIds(limit);
-			if (this.videoIds.length) {
-				await this.video(this.videoIds[0]);
-			}
+		this.channel = channel;
+		this.metadataCache.clear();
+		this.activeVideo = null;
+		this.videoIds = [];
+		this.currentIndex = -1;
+		await this.fetchVideoIds(limit);
+		if (this.videoIds.length) {
+			await this.video(this.videoIds[0]);
 		}
 		return { success: true, channel: this.channel };
 	}
@@ -258,4 +244,16 @@ export class TelegramService implements OnModuleInit {
 
 		return null;
 	}
+}
+
+interface VideoMetadata {
+	inputLocation: Api.InputDocumentFileLocation;
+	dcId: number;
+	fileSize: number;
+	mimeType: string;
+}
+
+interface ActiveVideo {
+	metadata: VideoMetadata;
+	cache: ChunkCache;
 }
