@@ -5,25 +5,29 @@ import {
 	OnGatewayDisconnect
 } from "@nestjs/websockets";
 
+import { Logger } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
+
 import { StateService } from "@/services/state.service";
 
 @WebSocketGateway({
 	cors: { origin: [process.env.HOST || "*"] }
 })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
+	private readonly logger = new Logger(AppGateway.name);
+
 	@WebSocketServer()
 	server: Server;
 
 	constructor(private stateService: StateService) {}
 
 	handleConnection(client: Socket) {
-		console.log(`Client connected: ${client.id}`);
+		this.logger.log(`Client connected: ${client.id}`);
 		client.emit("video", this.stateService.getCurrentState());
 	}
 
 	handleDisconnect(client: Socket) {
-		console.log(`Client disconnected: ${client.id}`);
+		this.logger.log(`Client disconnected: ${client.id}`);
 	}
 
 	broadcast(event: string, data: any) {

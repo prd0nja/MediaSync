@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { TelegramClient, Api, sessions } from "telegram";
 import bigInt from "big-integer";
 import type { Response } from "express";
@@ -12,6 +12,7 @@ const { StringSession } = sessions;
 
 @Injectable()
 export class TelegramService implements OnModuleInit {
+	private readonly logger = new Logger(TelegramService.name);
 	private client: TelegramClient;
 	private channel: string = "";
 	private metadataCache = new Map<string, VideoMetadata>();
@@ -35,8 +36,8 @@ export class TelegramService implements OnModuleInit {
 		const silentLogger = {
 			debug: () => {},
 			info: () => {},
-			warn: console.warn,
-			error: console.error
+			warn: this.logger.warn,
+			error: this.logger.error
 		};
 		this.client = new TelegramClient(new StringSession(stringSession), apiId, apiHash, {
 			connectionRetries: 5,
@@ -45,12 +46,12 @@ export class TelegramService implements OnModuleInit {
 		try {
 			await this.client.connect();
 			if (!(await this.client.isUserAuthorized())) {
-				console.warn("Telegram not authorized.");
+				this.logger.warn("Telegram not authorized.");
 			} else {
-				console.log("Telegram connected");
+				this.logger.log("Telegram connected");
 			}
 		} catch (error) {
-			console.error("Telegram failed to connect", error.message);
+			this.logger.error("Telegram failed to connect", error.message);
 		}
 	}
 
@@ -154,9 +155,7 @@ export class TelegramService implements OnModuleInit {
 				position += toWrite;
 			}
 		} catch (error) {
-			if (!state.aborted) {
-				console.error("Stream failed", error.message);
-			}
+			this.logger.error("Stream failed", error.message);
 		}
 		res.end();
 	}
