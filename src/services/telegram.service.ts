@@ -13,7 +13,7 @@ const { StringSession } = sessions;
 @Injectable()
 export class TelegramService implements OnModuleInit {
 	private readonly logger = new Logger(TelegramService.name);
-	private client: TelegramClient;
+	private client: Nullable<TelegramClient> = null;
 	private channel: string = "";
 	private metadataCache = new Map<string, VideoMetadata>();
 	private activeVideo: Nullable<ActiveVideo> = null;
@@ -33,6 +33,11 @@ export class TelegramService implements OnModuleInit {
 		const apiId = parseInt(process.env.TELEGRAM_API_ID || "0");
 		const apiHash = process.env.TELEGRAM_API_HASH || "";
 		const stringSession = process.env.TELEGRAM_STRING_SESSION || "";
+
+		if (!apiId || !apiHash || !stringSession) {
+			this.logger.warn("Missing Telegram credentials");
+			return;
+		}
 		const silentLogger = {
 			debug: () => {},
 			info: () => {},
@@ -43,6 +48,7 @@ export class TelegramService implements OnModuleInit {
 			connectionRetries: 5,
 			baseLogger: silentLogger as any
 		});
+
 		try {
 			await this.client.connect();
 			if (!(await this.client.isUserAuthorized())) {
@@ -52,10 +58,12 @@ export class TelegramService implements OnModuleInit {
 			}
 		} catch (error) {
 			this.logger.error("Telegram failed to connect", error.message);
+			this.client = null;
 		}
 	}
 
 	async setChannel(name: string, limit: number) {
+		if (!this.client) return;
 		const channel = name.replace(/^@/, "");
 		this.channel = channel;
 		this.metadataCache.clear();
@@ -110,7 +118,7 @@ export class TelegramService implements OnModuleInit {
 	}
 
 	async stream(range: string | undefined, res: Response) {
-		if (!range) return;
+		if (!this.client || !range) return;
 		const video = this.activeVideo;
 		if (!video) return;
 		const { metadata, cache } = video;
