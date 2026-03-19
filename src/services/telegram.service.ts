@@ -13,7 +13,7 @@ const { StringSession } = sessions;
 @Injectable()
 export class TelegramService implements OnModuleInit {
 	private readonly logger = new Logger(TelegramService.name);
-	private client: TelegramClient;
+	private client: Nullable<TelegramClient> = null;
 	private channel: string = "";
 	private metadataCache = new Map<string, VideoMetadata>();
 	private activeVideo: Nullable<ActiveVideo> = null;
@@ -33,6 +33,11 @@ export class TelegramService implements OnModuleInit {
 		const apiId = parseInt(process.env.TELEGRAM_API_ID || "0");
 		const apiHash = process.env.TELEGRAM_API_HASH || "";
 		const stringSession = process.env.TELEGRAM_STRING_SESSION || "";
+
+		if (!apiId || !apiHash || !stringSession) {
+			this.logger.warn("Missing Telegram credentials");
+			return;
+		}
 		const silentLogger = {
 			debug: () => {},
 			info: () => {},
@@ -43,6 +48,7 @@ export class TelegramService implements OnModuleInit {
 			connectionRetries: 5,
 			baseLogger: silentLogger as any
 		});
+
 		try {
 			await this.client.connect();
 			if (!(await this.client.isUserAuthorized())) {
@@ -52,10 +58,12 @@ export class TelegramService implements OnModuleInit {
 			}
 		} catch (error) {
 			this.logger.error("Telegram failed to connect", error.message);
+			this.client = null;
 		}
 	}
 
 	async setChannel(name: string, limit: number) {
+		if (!this.client) return;
 		const channel = name.replace(/^@/, "");
 		this.channel = channel;
 		this.metadataCache.clear();
@@ -110,7 +118,7 @@ export class TelegramService implements OnModuleInit {
 	}
 
 	async stream(range: string | undefined, res: Response) {
-		if (!range) return;
+		if (!this.client || !range) return;
 		const video = this.activeVideo;
 		if (!video) return;
 		const { metadata, cache } = video;
@@ -161,6 +169,7 @@ export class TelegramService implements OnModuleInit {
 	}
 
 	private async fetchVideoIds(limit: number) {
+		if (!this.client) return;
 		try {
 			const messages = await this.client.getMessages(this.channel, {
 				filter: new Api.InputMessagesFilterVideo(),
@@ -173,6 +182,7 @@ export class TelegramService implements OnModuleInit {
 	}
 
 	private async fetchChunk(metadata: VideoMetadata, chunkIndex: number) {
+		if (!this.client) throw new Error("Telegram not initialized");
 		const offset = chunkIndex * CHUNK_SIZE;
 		const buffers: Buffer[] = [];
 		let collected = 0;
@@ -192,6 +202,7 @@ export class TelegramService implements OnModuleInit {
 	}
 
 	private async getMetadata(messageId: number) {
+		if (!this.client) return null;
 		const cacheKey = `${this.channel}:${messageId}`;
 		if (this.metadataCache.has(cacheKey)) return this.metadataCache.get(cacheKey)!;
 
