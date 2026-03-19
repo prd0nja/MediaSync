@@ -169,6 +169,7 @@ export class TelegramService implements OnModuleInit {
 	}
 
 	private async fetchVideoIds(limit: number) {
+		if (!this.client) return;
 		try {
 			const messages = await this.client.getMessages(this.channel, {
 				filter: new Api.InputMessagesFilterVideo(),
@@ -181,6 +182,7 @@ export class TelegramService implements OnModuleInit {
 	}
 
 	private async fetchChunk(metadata: VideoMetadata, chunkIndex: number) {
+		if (!this.client) throw new Error("Telegram not initialized");
 		const offset = chunkIndex * CHUNK_SIZE;
 		const buffers: Buffer[] = [];
 		let collected = 0;
@@ -200,6 +202,7 @@ export class TelegramService implements OnModuleInit {
 	}
 
 	private async getMetadata(messageId: number) {
+		if (!this.client) return null;
 		const cacheKey = `${this.channel}:${messageId}`;
 		if (this.metadataCache.has(cacheKey)) return this.metadataCache.get(cacheKey)!;
 
