@@ -17,7 +17,8 @@ export class YoutubeService {
 		this.appGateway.broadcast(event, this.stateService.getCurrentState());
 	}
 
-	async video(id: string, ifEnded?: string) {
+	async video(url: string, ifEnded?: string) {
+		const id = this.extractVideoId(url);
 		if (ifEnded) {
 			const currentState = this.stateService.getCurrentState();
 			if (!currentState.duration || currentState.time < currentState.duration) {
@@ -215,5 +216,15 @@ export class YoutubeService {
 		const m = parseInt(match[2] || "0");
 		const s = parseInt(match[3] || "0");
 		return h * 3600 + m * 60 + s;
+	}
+
+	private extractVideoId(input: string) {
+		try {
+			const url = new URL(input);
+			if (url.hostname === "youtu.be") return url.pathname.slice(1);
+			return url.searchParams.get("v") ?? url.pathname.split("/").pop() ?? input;
+		} catch {
+			return input;
+		}
 	}
 }
